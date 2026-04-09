@@ -1,0 +1,47 @@
+name: Trigger Easylist Mirror Sync if no commit within the last 17 minutes
+
+on:
+  schedule:
+    - cron: "*/10 * * * *" 
+  workflow_dispatch:  
+
+env:
+  REPOSITORY_OWNER: thedoggybrad
+  REPOSITORY_NAME: easylist-mirror
+  WORKFLOW_NAME: "updater.yml"  
+  GITHUB_TOKEN: ${{ secrets.TOKEND }} 
+
+jobs:
+  trigger-workflow:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v6
+
+      - name: Get the latest commit time
+        id: get_commit_time
+        run: |
+          # Fetch the latest commit details from GitHub API
+          response=$(curl -s -H "Authorization: Bearer ${{ env.GITHUB_TOKEN }}" \
+                           -H "Accept: application/vnd.github.v3+json" \
+                           "https://api.github.com/repos/${{ env.REPOSITORY_OWNER }}/${{ env.REPOSITORY_NAME }}/commits?per_page=1")
+          # Extract the timestamp of the latest commit
+          last_commit_time=$(echo $response | jq -r '.[0].commit.committer.date')
+          last_commit_timestamp=$(date -d "$last_commit_time" +%s)
+          current_timestamp=$(date +%s)
+          time_diff_minutes=$(( (current_timestamp - last_commit_timestamp) / 60 ))
+          echo "Time difference in minutes: $time_diff_minutes"
+          echo "last_commit_time=$last_commit_time" >> $GITHUB_ENV
+          echo "time_diff_minutes=$time_diff_minutes" >> $GITHUB_ENV
+
+      - name: Trigger workflow if commit is older than 17 minutes
+        if: env.time_diff_minutes >= 0
+        run: |
+          # Trigger another workflow if the last commit was at least 11 minutes ago
+          curl -X POST \
+               -H "Authorization: Bearer ${{ env.GITHUB_TOKEN }}" \
+               -H "Accept: application/vnd.github.v3+json" \
+               -H "Content-Type: application/json" \
+               --data '{"ref":"main"}' \
+               "https://api.github.com/repos/${{ env.REPOSITORY_OWNER }}/${{ env.REPOSITORY_NAME }}/actions/workflows/${{ env.WORKFLOW_NAME }}/dispatches"
