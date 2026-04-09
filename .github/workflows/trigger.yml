@@ -2,7 +2,7 @@ name: Trigger Easylist Mirror Sync if no commit within the last 17 minutes
 
 on:
   schedule:
-    - cron: "*/10 * * * *" 
+    - cron: "*/30 * * * *" 
   workflow_dispatch:  
 
 env:
@@ -17,7 +17,7 @@ jobs:
 
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v6.0.2
 
       - name: Get the latest commit time
         id: get_commit_time
@@ -36,7 +36,7 @@ jobs:
           echo "time_diff_minutes=$time_diff_minutes" >> $GITHUB_ENV
 
       - name: Trigger workflow if commit is older than 17 minutes
-        if: env.time_diff_minutes >= 0
+        if: env.time_diff_minutes >= 17
         run: |
           # Trigger another workflow if the last commit was at least 11 minutes ago
           curl -X POST \
