@@ -1,4 +1,4 @@
-name: Trigger Easylist Mirror Sync if no commit within the last 17 minutes
+name: Trigger Easylist Mirror Sync if no commit within the last 17 minutes (AUTOMATIC MODE)
 
 on:
   schedule:
