@@ -3,7 +3,6 @@ name: Trigger Easylist Mirror Sync if no commit within the last 17 minutes
 on:
   schedule:
     - cron: "*/30 * * * *" 
-  workflow_dispatch:  
 
 env:
   REPOSITORY_OWNER: thedoggybrad
