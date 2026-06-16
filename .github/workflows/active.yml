@@ -1,0 +1,42 @@
+name: Ensure that the repository remains active
+
+on:
+  schedule:
+    - cron: "0 */2 * * *"
+  workflow_dispatch:
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.PAT }}
+
+      - name: Update active.txt (UTC+8)
+        run: |
+          TZ="Asia/Manila" date +"%Y-%m-%d %H:%M:%S UTC+8" > active.txt
+
+      - name: Commit changes
+        run: |
+          git config user.name "updaterbot-easylistmirror"
+          git config user.email "142152315+updaterbot-easylistmirror@users.noreply.github.com"
+
+          git add active.txt
+
+          if git diff --cached --quiet; then
+            echo "No changes"
+            exit 0
+          fi
+
+          git commit -m "Update active timestamp"
+
+      - name: Push
+        env:
+          PAT: ${{ secrets.PAT }}
+        run: |
+          git push \
+            https://x-access-token:${PAT}@github.com/updaterbot-easylistmirror/emergency_trigger.git \
+            HEAD:main
